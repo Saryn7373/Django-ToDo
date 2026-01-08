@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+# Virtual environment
+venv/
+env/
+# Environment variables and secrets
+.env
+.flaskenv
+# SQLite database
+*.sqlite3
+/db.sqlite3
+# Django specific
+*.log
+local_settings.py
+# Static and media files (if managed locally and not part of the source)
+# Note: It's common practice to ignore the collected static root.
+/static_root/
+/media/
+# IDE-specific files (e.g., PyCharm, VS Code)
+.idea/
+.vscode/
+# OS generated files
+.DS_Store
+
+.venv/
