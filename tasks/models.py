@@ -51,14 +51,14 @@ class Task(models.Model):
         verbose_name='Дата обновления'
     )
 
-    # author = models.ForeignKey(
-    #     'auth.User',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name='tasks',
-    #     verbose_name='Автор'
-    # )
+    author = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tasks',
+        verbose_name='Автор'
+    )
 
     class Meta:
         verbose_name = 'Задача'

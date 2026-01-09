@@ -108,7 +108,7 @@
 
                         <!-- Кнопки действий -->
                         <div class="d-flex gap-2 justify-content-end pt-3 border-top">
-                            <a href="{% url 'projects:index' %}" class="btn btn-outline-secondary">
+                            <a href="{% url 'projects:project-detail' project.id %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-lg"></i> Отмена
                             </a>
                             <button type="submit" class="btn btn-primary px-4">

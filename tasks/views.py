@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseBadRequest
 
 # Create your views here.
 
@@ -34,19 +34,17 @@ class TaskDetail(generic.DetailView):
 
 
 class TaskCreate(generic.CreateView):
-    """Создание новой задачи"""
     model = Task
     template_name = 'tasks/task_form.html'
-    fields = ['project', 'title', 'description', 'status']
-    success_url = reverse_lazy('projects:index')
-    
-    def get_initial(self):
-        initial = super().get_initial()
+    fields = ['title', 'description']
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
         project_id = self.request.GET.get('project')
         if project_id:
             project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
-            initial['project'] = project
-        return initial
+            form.instance.project = project  # Set directly on instance
+        return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -61,10 +59,33 @@ class TaskUpdate(generic.UpdateView):
     """Редактирование задачи"""
     model = Task
     template_name = 'tasks/task_form.html'
-    fields = ['project', 'title', 'description', 'status']
+    fields = ['title', 'description']
 
     def get_queryset(self):
         return Task.objects.filter(project__deleted_at__isnull=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Редактировать задачу'
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.project.id})
+
+class TaskUpdateStatus(generic.UpdateView):
+    model = Task
+    fields = ['status']
+    http_method_names = ['post']
+
+    def get_queryset(self):
+        return Task.objects.filter(project__deleted_at__isnull=True)
+
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def form_invalid(self, form):
+        return HttpResponseBadRequest("Неверный статус задачи")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

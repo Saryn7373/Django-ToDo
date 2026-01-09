@@ -1,15 +1,19 @@
-from django.db import models
 import uuid
+from django.db import models
+from django.conf import settings
+from django.core.exceptions import ValidationError
 
 class Project(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # user = models.ForeignKey(
-    #     User, 
-    #     on_delete=models.CASCADE, 
-    #     related_name='projects',
-    #     verbose_name='Пользователь'
-    # )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='projects',
+        verbose_name='project owner',
+        null=True,
+        blank=True
+    )
     title = models.CharField(max_length=200, verbose_name='title')
     description = models.TextField(blank=True, null=True, verbose_name='description')
     
@@ -27,21 +31,16 @@ class Project(models.Model):
     class Meta:
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
-        # indexes = [
-        #     models.Index(fields=['user', 'is_archived']),
-        #     models.Index(fields=['user', 'is_favorite']),
-        # ]
-        # constraints = [
-        #     models.UniqueConstraint(
-        #         fields=['user', 'title'],
-        #         name='unique_project_title_per_user'
-        #     ),
-        #     models.UniqueConstraint(
-        #         fields=['user'],
-        #         condition=models.Q(is_default=True),
-        #         name='unique_default_project_per_user'
-        #     )
-        # ]
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['user', 'deleted_at']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'title'],
+                name='unique_project_title_per_user'
+            )
+        ]
     
     def __str__(self):
         return f"{self.title}"
@@ -62,6 +61,9 @@ class Project(models.Model):
         return round((self.completed_tasks / total) * 100, 1)
     
     def save(self, *args, **kwargs):
-        # if not Project.objects.filter(user=self.user).exists():
-        #     self.is_default = True
+        if not self.pk and not self.user:
+            from django.contrib.auth import get_user_model
+            current_user = get_user_model().objects.first()  # только для тестов/разработки!
+            if current_user:
+                self.user = current_user
         super().save(*args, **kwargs)
