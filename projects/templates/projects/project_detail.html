@@ -37,6 +37,50 @@
     </div>
     {% endif %}
 
+    <!-- Участники проекта -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Участники проекта ({{ project.users.count }})</h5>
+        </div>
+        <div class="card-body">
+            {% if project.projectmembership_set.exists %}
+                <div class="row g-3">
+                    {% for membership in project.projectmembership_set.all %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body d-flex align-items-center">
+                                    <div class="me-3">
+                                        <!-- Аватар (можно заменить на реальный, если добавите поле avatar в User) -->
+                                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                                            {{ membership.user.username|slice:":1"|upper }}
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">{{ membership.user.username }}</h6>
+                                        <small class="text-muted">
+                                            {{ membership.get_role_display }}
+                                            • Присоединился {{ membership.joined_at|date:"d.m.Y" }}
+                                        </small>
+                                    </div>
+                                    <!-- Можно добавить кнопки действий для владельца -->
+                                    <!-- {% if request.user == project.owner %} -->
+                                    <!--     <div class="ms-auto">
+                                    <!--         <a href="#" class="btn btn-sm btn-outline-danger">Удалить</a>
+                                    <!--     </div> -->
+                                    <!-- {% endif %} -->
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    В проекте пока нет участников
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Прогресс выполнения -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body">

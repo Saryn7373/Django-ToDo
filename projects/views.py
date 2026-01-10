@@ -8,13 +8,13 @@ from .models import Project
 class Index(LoginRequiredMixin, generic.ListView):
     template_name = 'projects/index.html'
     context_object_name = 'projects'
-    login_url = '/accounts/login/'  # или куда у вас логин
+    login_url = '/accounts/login/'
 
     def get_queryset(self):
         return Project.objects.filter(
-            user=self.request.user,
+            users=self.request.user,
             deleted_at__isnull=True
-        ).order_by('-created_at')
+        )
 
 
 class ProjectDetail(LoginRequiredMixin, generic.DetailView):
@@ -24,9 +24,8 @@ class ProjectDetail(LoginRequiredMixin, generic.DetailView):
     login_url = '/accounts/login/'
 
     def get_queryset(self):
-        # Только проекты текущего пользователя и не удалённые
         return Project.objects.filter(
-            user=self.request.user,
+            users=self.request.user,
             deleted_at__isnull=True
         )
 
@@ -38,9 +37,9 @@ class ProjectCreate(LoginRequiredMixin, generic.CreateView):
     login_url = '/accounts/login/'
 
     def form_valid(self, form):
-        # Автоматически привязываем текущего пользователя как владельца
-        form.instance.user = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        form.instance.users.add(self.request.user)
+        return response
 
     def get_success_url(self):
         return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.pk})
@@ -52,9 +51,8 @@ class ProjectUpdate(LoginRequiredMixin, generic.UpdateView):
     login_url = '/accounts/login/'
 
     def get_queryset(self):
-        # Только свои проекты
         return Project.objects.filter(
-            user=self.request.user,
+            users=self.request.user,  # ← изменили на users (N:N)
             deleted_at__isnull=True
         )
 
@@ -70,7 +68,7 @@ class ProjectDelete(LoginRequiredMixin, generic.DeleteView):
 
     def get_queryset(self):
         return Project.objects.filter(
-            user=self.request.user,
+            users=self.request.user,  # ← изменили на users (N:N)
             deleted_at__isnull=True
         )
 

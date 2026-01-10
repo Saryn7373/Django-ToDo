@@ -3,17 +3,39 @@ from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
+class ProjectMembership(models.Model):
+    project = models.ForeignKey('Project', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    role = models.CharField(
+        max_length=20,
+        choices=[
+            ('owner', 'Владелец'),
+            ('member', 'Участник'),
+        ],
+        default='member',
+        verbose_name='Роль'
+    )
+    joined_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата присоединения')
+    class Meta:
+        verbose_name = 'Участие в проекте'
+        verbose_name_plural = 'Участие в проектах'
+        unique_together = ('project', 'user')
+    
+    def __str__(self):
+        return f"{self.user} в {self.project} ({self.role})"
+
 class Project(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(
+    
+    users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        through='ProjectMembership',
         related_name='projects',
-        verbose_name='project owner',
-        null=True,
-        blank=True
+        verbose_name='Участники проекта'
     )
+    
     title = models.CharField(max_length=200, verbose_name='title')
     description = models.TextField(blank=True, null=True, verbose_name='description')
     
@@ -32,15 +54,17 @@ class Project(models.Model):
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
         indexes = [
-            models.Index(fields=['user', 'created_at']),
-            models.Index(fields=['user', 'deleted_at']),
+            # models.Index(fields=['user', 'created_at']),
+            # models.Index(fields=['user', 'deleted_at']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['deleted_at'])
         ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'title'],
-                name='unique_project_title_per_user'
-            )
-        ]
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         fields=['user', 'title'],
+        #         name='unique_project_title_per_user'
+        #     )
+        # ]
     
     def __str__(self):
         return f"{self.title}"
