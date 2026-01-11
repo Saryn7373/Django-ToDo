@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    {{ task.title }} — Задача
+{{ task.title }} — Задача
 {% endblock %}
 
 {% block content %}
@@ -9,22 +9,11 @@
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
             <h1 class="h3 mb-2">{{ task.title }}</h1>
-            <div class="text-muted small">
-                <strong>Проект:</strong>
-                <a href="{% url 'projects:project-detail' task.project.id %}">
-                    {{ task.project.title }}
-                </a>
-                <br>
-                <strong>Статус:</strong>
-                <span class="badge bg-{{ task.status|yesno:'secondary,primary,warning,success' }} fs-6">
-                    {{ task.get_status_display }}
-                </span>
-                <br>
-                Создано: {{ task.created_at|date:"d.m.Y в H:i" }}
-                {% if task.updated_at != task.created_at %}
-                    <br>Обновлено: {{ task.updated_at|date:"d.m.Y в H:i" }}
-                {% endif %}
-            </div>
+            <p class="text-muted">
+                Проект: <a href="{% url 'projects:project-detail' task.project.id %}">{{ task.project.title }}</a>
+                | Статус: <span class="badge bg-black">{{ task.status_display_ru }}</span>
+                | Автор: {{ task.author.username|default:"Не указан" }}
+            </p>
         </div>
 
         <div class="btn-group" role="group">
@@ -38,18 +27,18 @@
     </div>
 
     {% if task.description %}
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h5 class="mb-0">Описание</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-0">{{ task.description|linebreaks }}</p>
-            </div>
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Описание</h5>
         </div>
+        <div class="card-body">
+            <p class="mb-0">{{ task.description|linebreaks }}</p>
+        </div>
+    </div>
     {% else %}
-        <div class="alert alert-info">
-            Описание задачи отсутствует.
-        </div>
+    <div class="alert alert-info">
+        Описание задачи отсутствует.
+    </div>
     {% endif %}
 
     <div class="mt-4">

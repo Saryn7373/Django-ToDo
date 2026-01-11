@@ -17,7 +17,7 @@
                             <i class="bi bi-plus-circle text-primary"></i> Новая задача
                         {% endif %}
                     </h3>
-                    <a href="{% url 'projects:project-detail' form.instance.project.id %}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{% if form.initial.project.id %}{% url 'projects:project-detail' form.initial.project.id %}{% else %}{% url 'projects:project-detail' form.instance.project.id %}{% endif %}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-list"></i> К проекту
                     </a>
                 </div>
@@ -92,11 +92,11 @@
 
                         <!-- Кнопки -->
                         <div class="d-flex gap-2 justify-content-end pt-3 border-top">
-                            <a href="{% url 'projects:index' %}" class="btn btn-outline-secondary">
+                            <a href="{% if form.initial.project.id %}{% url 'projects:project-detail' form.initial.project.id %}{% else %}{% url 'projects:project-detail' form.instance.project.id %}{% endif %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Отмена
                             </a>
                             <button type="submit" class="btn btn-primary px-4">
-                                {% if form.instance.pk %}
+                                {% if form.instance %}
                                     <i class="bi bi-save"></i> Сохранить
                                 {% else %}
                                     <i class="bi bi-check-lg"></i> Создать

@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from projects.models import Project
 from .models import Task
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class TaskList(generic.ListView):
@@ -33,26 +34,43 @@ class TaskDetail(generic.DetailView):
         return Task.objects.filter(project__deleted_at__isnull=True)
 
 
-class TaskCreate(generic.CreateView):
+class TaskCreate(LoginRequiredMixin, generic.CreateView):
     model = Task
     template_name = 'tasks/task_form.html'
     fields = ['title', 'description']
+    login_url = '/accounts/login/'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        project_id = self.request.GET.get('project')
+        if project_id:
+            try:
+                project = Project.objects.get(id=project_id, deleted_at__isnull=True)
+                initial['project'] = project
+            except Project.DoesNotExist:
+                pass
+        return initial
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         project_id = self.request.GET.get('project')
         if project_id:
             project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
-            form.instance.project = project  # Set directly on instance
+            form.instance.project = project 
         return form
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_title'] = 'Новая задача'
-        return context
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        if not form.instance.project_id:
+            project_id = self.request.GET.get('project')
+            if project_id:
+                form.instance.project_id = project_id
+        return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.project.id})
+        if self.object.project:
+            return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.project.id})
+        return reverse_lazy('projects:index')
 
 
 class TaskUpdate(generic.UpdateView):

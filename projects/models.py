@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 class ProjectMembership(models.Model):
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
@@ -91,3 +92,79 @@ class Project(models.Model):
             if current_user:
                 self.user = current_user
         super().save(*args, **kwargs)
+
+
+class ProjectInvitation(models.Model):
+    project = models.ForeignKey(
+        'Project',
+        on_delete=models.CASCADE,
+        related_name='invitations',
+        verbose_name='Проект'
+    )
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_invitations',
+        verbose_name='Создал приглашение'
+    )
+    
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name='Токен приглашения'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Создано'
+    )
+    
+    expires_at = models.DateTimeField(
+        verbose_name='Истекает',
+        null=True,
+        blank=True
+    )
+    
+    is_single_use = models.BooleanField(
+        default=True,
+        verbose_name='Одноразовая ссылка'
+    )
+    
+    used_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='used_invitations',
+        verbose_name='Использовал'
+    )
+    
+    used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата использования'
+    )
+
+    class Meta:
+        verbose_name = 'Приглашение в проект'
+        verbose_name_plural = 'Приглашения в проекты'
+
+    def __str__(self):
+        return f"Приглашение в {self.project} от {self.created_by}"
+
+    @property
+    def is_expired(self):
+        return self.expires_at and self.expires_at < timezone.now()
+
+    @property
+    def is_used(self):
+        return self.used_by is not None
+
+    @property
+    def is_valid(self):
+        return not self.is_expired and not (self.is_single_use and self.is_used)
+
+    def get_absolute_url(self):
+        return f"/invite/{self.token}/"
