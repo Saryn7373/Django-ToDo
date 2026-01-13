@@ -19,7 +19,6 @@ class TaskList(generic.ListView):
     context_object_name = 'tasks'
 
     def get_queryset(self):
-        # Показываем только не удалённые задачи, можно добавить фильтр по проекту
         return Task.objects.filter(project__deleted_at__isnull=True).order_by('-created_at')
 
 

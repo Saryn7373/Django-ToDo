@@ -8,6 +8,9 @@ from django.contrib import messages
 from datetime import timedelta
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from django.db.models import Q
 
 class OwnerRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
@@ -37,6 +40,15 @@ class ProjectDetail(LoginRequiredMixin, generic.DetailView):
     template_name = 'projects/project_detail.html'
     context_object_name = 'project'
     login_url = '/accounts/login/'
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(object=self.object)
+
+        if request.htmx:
+            return HttpResponse(render_to_string('projects/comps/tasks_list.html', context, request=request))
+        
+        return self.render_to_response(context)
 
     def get_queryset(self):
         return Project.objects.filter(
@@ -51,11 +63,12 @@ class ProjectDetail(LoginRequiredMixin, generic.DetailView):
             role='owner'
         ).exists()
         context['new_invite_url'] = self.request.session.pop('new_invite_url', None)
+        
         tasks = self.object.tasks.all()
         if not self.object.show_completed:
-            tasks = tasks.exclude(status='done')
+            tasks = tasks.filter(~Q(status='done'))
 
-        paginator = Paginator(tasks, 10)
+        paginator = Paginator(tasks, 5)
         page = self.request.GET.get('page', 1)
 
         try:
@@ -96,7 +109,7 @@ class ProjectUpdate(LoginRequiredMixin, generic.UpdateView, OwnerRequiredMixin):
 
     def get_queryset(self):
         return Project.objects.filter(
-            users=self.request.user,  # ← изменили на users (N:N)
+            users=self.request.user,
             deleted_at__isnull=True
         )
 
@@ -112,7 +125,7 @@ class ProjectDelete(LoginRequiredMixin, generic.DeleteView, OwnerRequiredMixin):
 
     def get_queryset(self):
         return Project.objects.filter(
-            users=self.request.user,  # ← изменили на users (N:N)
+            users=self.request.user,
             deleted_at__isnull=True
         )
 
@@ -140,7 +153,7 @@ class CreateInvitationView(LoginRequiredMixin, generic.View):
         invitation = ProjectInvitation.objects.create(
             project=project,
             created_by=request.user,
-            expires_at=timezone.now() + timedelta(days=7),  # 7 дней
+            expires_at=timezone.now() + timedelta(days=7),
             is_single_use=True
         )
         
@@ -190,7 +203,7 @@ class AcceptInvitationView(generic.View):
             # Если не авторизован — сохраняем приглашение в сессии и редиректим на логин
             request.session['pending_invite_token'] = str(token)
             messages.info(request, "Войдите или зарегистрируйтесь, чтобы присоединиться к проекту")
-            return redirect('/accounts/login')  # или ваш URL логина
+            return redirect('/accounts/login')
         
         return redirect('projects:project-detail', pk=invitation.project.pk)
 

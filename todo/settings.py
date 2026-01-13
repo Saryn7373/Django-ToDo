@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'projects.apps.ProjectsConfig',
-    'tasks.apps.TasksConfig'
+    'tasks.apps.TasksConfig',
+    'accounts.apps.AccountsConfig',
+    'simple_history'
 ]
 
 MIDDLEWARE = [
@@ -49,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware'
 ]
 
 ROOT_URLCONF = 'todo.urls'
@@ -124,3 +127,4 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/projects/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'

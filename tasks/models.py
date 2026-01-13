@@ -63,7 +63,7 @@ class Task(models.Model):
     class Meta:
         verbose_name = 'Задача'
         verbose_name_plural = 'Задачи'
-        ordering = ['-created_at']  # Новые задачи сверху
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['project', 'status']),
             models.Index(fields=['created_at']),

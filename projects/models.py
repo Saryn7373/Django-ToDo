@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from simple_history.models import HistoricalRecords
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -7,7 +8,6 @@ from django.utils import timezone
 class ProjectMembership(models.Model):
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    
     role = models.CharField(
         max_length=20,
         choices=[
@@ -18,6 +18,8 @@ class ProjectMembership(models.Model):
         verbose_name='Роль'
     )
     joined_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата присоединения')
+    
+    
     class Meta:
         verbose_name = 'Участие в проекте'
         verbose_name_plural = 'Участие в проектах'
@@ -29,27 +31,24 @@ class ProjectMembership(models.Model):
 class Project(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
     users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         through='ProjectMembership',
         related_name='projects',
         verbose_name='Участники проекта'
     )
-    
     title = models.CharField(max_length=200, verbose_name='title')
     description = models.TextField(blank=True, null=True, verbose_name='description')
-    
-    
     # Настройки проекта
     show_completed = models.BooleanField(
         default=True,
         verbose_name='show completed tasks'
     )
-    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='created at')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='updated at')
     deleted_at = models.DateTimeField(null=True, blank=True, verbose_name='deleted at')
+    history = HistoricalRecords()   
+    
     
     class Meta:
         verbose_name = 'Project'
@@ -88,7 +87,7 @@ class Project(models.Model):
     def save(self, *args, **kwargs):
         if not self.pk and not self.user:
             from django.contrib.auth import get_user_model
-            current_user = get_user_model().objects.first()  # только для тестов/разработки!
+            current_user = get_user_model().objects.first()
             if current_user:
                 self.user = current_user
         super().save(*args, **kwargs)
@@ -101,37 +100,31 @@ class ProjectInvitation(models.Model):
         related_name='invitations',
         verbose_name='Проект'
     )
-    
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='created_invitations',
         verbose_name='Создал приглашение'
     )
-    
     token = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
         unique=True,
         verbose_name='Токен приглашения'
     )
-    
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Создано'
     )
-    
     expires_at = models.DateTimeField(
         verbose_name='Истекает',
         null=True,
         blank=True
     )
-    
     is_single_use = models.BooleanField(
         default=True,
         verbose_name='Одноразовая ссылка'
     )
-    
     used_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -140,7 +133,6 @@ class ProjectInvitation(models.Model):
         related_name='used_invitations',
         verbose_name='Использовал'
     )
-    
     used_at = models.DateTimeField(
         null=True,
         blank=True,

@@ -1,20 +1,28 @@
 from django.contrib import admin
 from .models import Project
 from .models import ProjectMembership
-admin.site.register(ProjectMembership)
-
-# Register your models here.
-
+from django.db.models import Q
 from django.http import HttpResponse
 import csv
 
+# Register your models here.
+
+admin.site.register(ProjectMembership)
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('title', 'created_at', 'show_completed')  # добавьте полезные поля
-    list_filter = ('show_completed', 'created_at')            # фильтры — удобно
-    search_fields = ('title', 'description')                  # поиск
+    list_display = ('title', 'created_at', 'show_completed')
+    list_filter = ('show_completed', 'created_at')
     
-    actions = ['export_as_csv']  # ← это ключевая строка, без неё действий не будет!
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        query = request.GET.get('q')
+        if query:
+            qs = qs.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            )
+        return qs
+    
+    actions = ['export_as_csv']
 
     def export_as_csv(self, request, queryset):
         meta = self.model._meta
