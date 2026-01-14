@@ -19,6 +19,15 @@ from django.urls import include
 from django.urls import path
 from accounts.views import register
 from django.views.generic import RedirectView
+from accounts.views import UserDeleteView
+
+from rest_framework.routers import DefaultRouter
+from projects.views_api import ProjectViewSet
+from tasks.views_api import TaskViewSet
+
+router = DefaultRouter()
+router.register(r'projects', ProjectViewSet)
+router.register(r'tasks', TaskViewSet)
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/projects/', permanent=True)),
@@ -26,5 +35,8 @@ urlpatterns = [
     path('projects/', include('projects.urls')),
     path('tasks/', include('tasks.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/signup/', register, name='register')
+    path('accounts/signup/', register, name='register'),
+    path('accounts/user/<int:pk>/delete/', UserDeleteView.as_view(), name='user-delete'),
+    path('api/', include(router.urls)),
+    path('api/projects/<uuid:project_pk>/tasks/', TaskViewSet.as_view({'get': 'list', 'post': 'create'}), name='project-tasks-list')
 ]

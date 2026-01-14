@@ -30,7 +30,7 @@ class TaskDetail(generic.DetailView):
 
     def get_queryset(self):
         # Только задачи из активных проектов
-        return Task.objects.filter(project__deleted_at__isnull=True)
+        return Task.objects
 
 
 class TaskCreate(LoginRequiredMixin, generic.CreateView):
@@ -44,7 +44,7 @@ class TaskCreate(LoginRequiredMixin, generic.CreateView):
         project_id = self.request.GET.get('project')
         if project_id:
             try:
-                project = Project.objects.get(id=project_id, deleted_at__isnull=True)
+                project = Project.objects.get(id=project_id)
                 initial['project'] = project
             except Project.DoesNotExist:
                 pass
@@ -54,7 +54,7 @@ class TaskCreate(LoginRequiredMixin, generic.CreateView):
         form = super().get_form(form_class)
         project_id = self.request.GET.get('project')
         if project_id:
-            project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
+            project = get_object_or_404(Project, id=project_id)
             form.instance.project = project 
         return form
 
@@ -78,9 +78,6 @@ class TaskUpdate(generic.UpdateView):
     template_name = 'tasks/task_form.html'
     fields = ['title', 'description']
 
-    def get_queryset(self):
-        return Task.objects.filter(project__deleted_at__isnull=True)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Редактировать задачу'
@@ -93,9 +90,6 @@ class TaskUpdateStatus(generic.UpdateView):
     model = Task
     fields = ['status']
     http_method_names = ['post']
-
-    def get_queryset(self):
-        return Task.objects.filter(project__deleted_at__isnull=True)
 
     def form_valid(self, form):
         self.object = form.save()
@@ -114,18 +108,8 @@ class TaskUpdateStatus(generic.UpdateView):
 
 
 class TaskDelete(generic.DeleteView):
-    """Мягкое удаление задачи (можно добавить поле deleted_at в Task, если нужно)"""
     model = Task
     template_name = 'tasks/task_confirm_delete.html'
 
-    def get_queryset(self):
-        return Task.objects.filter(project__deleted_at__isnull=True)
-
     def get_success_url(self):
         return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.project.id})
-
-    def delete(self, request, *args, **kwargs):
-        task = self.get_object()
-        task.deleted_at = timezone.now()
-        task.save(update_fields=['deleted_at'])
-        return HttpResponseRedirect(self.get_success_url())

@@ -46,7 +46,6 @@ class Project(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='created at')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='updated at')
-    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name='deleted at')
     history = HistoricalRecords()   
     
     
@@ -54,17 +53,8 @@ class Project(models.Model):
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
         indexes = [
-            # models.Index(fields=['user', 'created_at']),
-            # models.Index(fields=['user', 'deleted_at']),
             models.Index(fields=['created_at']),
-            models.Index(fields=['deleted_at'])
         ]
-        # constraints = [
-        #     models.UniqueConstraint(
-        #         fields=['user', 'title'],
-        #         name='unique_project_title_per_user'
-        #     )
-        # ]
     
     def __str__(self):
         return f"{self.title}"

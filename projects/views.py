@@ -31,7 +31,6 @@ class Index(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         return Project.objects.filter(
             users=self.request.user,
-            deleted_at__isnull=True
         )
 
 
@@ -53,7 +52,6 @@ class ProjectDetail(LoginRequiredMixin, generic.DetailView):
     def get_queryset(self):
         return Project.objects.filter(
             users=self.request.user,
-            deleted_at__isnull=True
         )
     
     def get_context_data(self, **kwargs):
@@ -109,8 +107,7 @@ class ProjectUpdate(LoginRequiredMixin, generic.UpdateView, OwnerRequiredMixin):
 
     def get_queryset(self):
         return Project.objects.filter(
-            users=self.request.user,
-            deleted_at__isnull=True
+            users=self.request.user
         )
 
     def get_success_url(self):
@@ -121,19 +118,11 @@ class ProjectDelete(LoginRequiredMixin, generic.DeleteView, OwnerRequiredMixin):
     model = Project
     template_name = 'projects/project_confirm_delete.html'
     success_url = reverse_lazy('projects:index')
-    login_url = '/accounts/login/'
 
     def get_queryset(self):
         return Project.objects.filter(
-            users=self.request.user,
-            deleted_at__isnull=True
+            users=self.request.user
         )
-
-    def delete(self, request, *args, **kwargs):
-        project = self.get_object()
-        project.deleted_at = timezone.now()
-        project.save(update_fields=['deleted_at'])
-        return super().delete(request, *args, **kwargs)
 
 class CreateInvitationView(LoginRequiredMixin, generic.View):
     """Создание ссылки-приглашения (только владелец)"""
