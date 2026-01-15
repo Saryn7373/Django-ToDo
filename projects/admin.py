@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import Project
-from .models import ProjectMembership
+from .models import Project, ProjectMembership, ProjectInvitation
 from django.db.models import Q
 from django.http import HttpResponse
 import csv
@@ -52,3 +51,30 @@ class ProjectAdmin(admin.ModelAdmin):
         return response
     
     export_as_csv.short_description = "Экспорт выбранных проектов в CSV"
+
+@admin.register(ProjectInvitation)
+class ProjectInvitationAdmin(admin.ModelAdmin):
+    list_display = (
+        'project',
+        'created_by',
+        'token',
+        'created_at',
+        'expires_at',
+        'is_single_use',
+        'is_used',
+        'is_expired',
+        'status_display'
+    )
+    list_filter = ('is_single_use', 'created_at', 'expires_at')
+    search_fields = ('project__title', 'created_by__username', 'token')
+    readonly_fields = ('token', 'created_at', 'used_by', 'used_at')
+    list_per_page = 20
+
+    def status_display(self, obj):
+        if obj.is_expired:
+            return "Истёк"
+        if obj.is_used:
+            return "Использован"
+        return "Активен"
+    
+    status_display.short_description = 'Статус'
