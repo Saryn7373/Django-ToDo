@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Project, ProjectMembership
+from .models import Project, ProjectMembership, ProjectInvitation
+
+class ProjectInvitationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectInvitation
+        fields = ['project', 'token', 'expires_at', 'is_single_use', 'created_at', 'used_by', 'used_at']
+        read_only_fields = ['token', 'created_at', 'used_by', 'used_at']
 
 
 class ProjectMembershipSerializer(serializers.ModelSerializer):

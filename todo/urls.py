@@ -26,7 +26,7 @@ from projects.views_api import ProjectViewSet
 from tasks.views_api import TaskViewSet
 
 router = DefaultRouter()
-router.register(r'projects', ProjectViewSet)
+router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'tasks', TaskViewSet)
 
 urlpatterns = [
